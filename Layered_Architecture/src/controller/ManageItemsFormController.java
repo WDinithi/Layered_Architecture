@@ -1,8 +1,8 @@
 package controller;
 
+import DAO.ItemDAOImpl;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import db.DBConnection;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,12 +15,14 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import model.ItemDTO;
 import view.tdm.ItemTM;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
+import java.util.ArrayList;
 
 /**
  * @author : Sanu Vithanage
@@ -37,6 +39,9 @@ public class ManageItemsFormController {
     public TableView<ItemTM> tblItems;
     public JFXTextField txtUnitPrice;
     public JFXButton btnAddNewItem;
+    private Object ItemDTO;
+
+
 
     public void initialize() {
         tblItems.getColumns().get(0).setCellValueFactory(new PropertyValueFactory<>("code"));
@@ -72,20 +77,25 @@ public class ManageItemsFormController {
         tblItems.getItems().clear();
         try {
             /*Get all items*/
-            Connection connection = DBConnection.getDbConnection().getConnection();
+           /* Connection connection = DBConnection.getDbConnection().getConnection();
             Statement stm = connection.createStatement();
             ResultSet rst = stm.executeQuery("SELECT * FROM Item");
-            while (rst.next()) {
-                tblItems.getItems().add(new ItemTM(rst.getString("code"), rst.getString("description"), rst.getBigDecimal("unitPrice"), rst.getInt("qtyOnHand")));
+             }*/
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
+            ArrayList<ItemDTO>itemDTOS=itemDAO.getAll();
+            PreparedStatement stm = null;
+            ResultSet rst=stm.executeQuery("SELECT * FROM Item");
+            for (ItemDTO itemDTO:itemDTOS )
+                    tblItems.getItems().add(new ItemTM(itemDTO.getCode(),itemDTO.getDescription(), itemDTO.getUnitPrice(),itemDTO.getQtyOnHand()));
             }
-        } catch (SQLException e) {
+        catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    private void initUI() {
+        private void initUI() {
         txtCode.clear();
         txtDescription.clear();
         txtUnitPrice.clear();
@@ -133,14 +143,16 @@ public class ManageItemsFormController {
             if (!existItem(code)) {
                 new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
             }
-            Connection connection = DBConnection.getDbConnection().getConnection();
+           /* Connection connection = DBConnection.getDbConnection().getConnection();
             PreparedStatement pstm = connection.prepareStatement("DELETE FROM Item WHERE code=?");
             pstm.setString(1, code);
             pstm.executeUpdate();
 
             tblItems.getItems().remove(tblItems.getSelectionModel().getSelectedItem());
             tblItems.getSelectionModel().clearSelection();
-            initUI();
+            initUI();*/
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
+            itemDAO.deleteIteam(code);
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, "Failed to delete the item " + code).show();
         } catch (ClassNotFoundException e) {
@@ -176,15 +188,17 @@ public class ManageItemsFormController {
                     new Alert(Alert.AlertType.ERROR, code + " already exists").show();
                 }
                 //Save Item
-                Connection connection = DBConnection.getDbConnection().getConnection();
+               /* Connection connection = DBConnection.getDbConnection().getConnection();
                 PreparedStatement pstm = connection.prepareStatement("INSERT INTO Item (code, description, unitPrice, qtyOnHand) VALUES (?,?,?,?)");
                 pstm.setString(1, code);
                 pstm.setString(2, description);
                 pstm.setBigDecimal(3, unitPrice);
                 pstm.setInt(4, qtyOnHand);
                 pstm.executeUpdate();
-                tblItems.getItems().add(new ItemTM(code, description, unitPrice, qtyOnHand));
+                tblItems.getItems().add(new ItemTM(code, description, unitPrice, qtyOnHand));*/
 
+                ItemDAOImpl itemDAO=new ItemDAOImpl();
+                itemDAO.saveItem(new ItemDTO(code, description, unitPrice, qtyOnHand));
             } catch (SQLException e) {
                 new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
             } catch (ClassNotFoundException e) {
@@ -197,14 +211,16 @@ public class ManageItemsFormController {
                     new Alert(Alert.AlertType.ERROR, "There is no such item associated with the id " + code).show();
                 }
                 /*Update Item*/
-                Connection connection = DBConnection.getDbConnection().getConnection();
+               /* Connection connection = DBConnection.getDbConnection().getConnection();
                 PreparedStatement pstm = connection.prepareStatement("UPDATE Item SET description=?, unitPrice=?, qtyOnHand=? WHERE code=?");
                 pstm.setString(1, description);
                 pstm.setBigDecimal(2, unitPrice);
                 pstm.setInt(3, qtyOnHand);
                 pstm.setString(4, code);
                 pstm.executeUpdate();
-
+*/
+                ItemDAOImpl itemDAO=new ItemDAOImpl();
+                itemDAO.updateItem(new ItemDTO(code,description,unitPrice,qtyOnHand));
                 ItemTM selectedItem = tblItems.getSelectionModel().getSelectedItem();
                 selectedItem.setDescription(description);
                 selectedItem.setQtyOnHand(qtyOnHand);
@@ -222,24 +238,33 @@ public class ManageItemsFormController {
 
 
     private boolean existItem(String code) throws SQLException, ClassNotFoundException {
-        Connection connection = DBConnection.getDbConnection().getConnection();
+       /* Connection connection = DBConnection.getDbConnection().getConnection();
         PreparedStatement pstm = connection.prepareStatement("SELECT code FROM Item WHERE code=?");
         pstm.setString(1, code);
-        return pstm.executeQuery().next();
+        return pstm.executeQuery().next();*/
+        ItemDAOImpl itemDAO=new ItemDAOImpl();
+       return itemDAO.exitItem(code);
+
     }
 
 
     private String generateNewId() {
         try {
-            Connection connection = DBConnection.getDbConnection().getConnection();
+            /*Connection connection = DBConnection.getDbConnection().getConnection();
             ResultSet rst = connection.createStatement().executeQuery("SELECT code FROM Item ORDER BY code DESC LIMIT 1;");
+
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
+            itemDAO.generateNewId();
             if (rst.next()) {
                 String id = rst.getString("code");
                 int newItemId = Integer.parseInt(id.replace("I00-", "")) + 1;
                 return String.format("I00-%03d", newItemId);
             } else {
                 return "I00-001";
-            }
+            }*/
+            ItemDAOImpl itemDAO=new ItemDAOImpl();
+            return itemDAO.generateNewId();
+
         } catch (SQLException e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         } catch (ClassNotFoundException e) {
