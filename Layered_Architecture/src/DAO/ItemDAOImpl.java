@@ -6,8 +6,7 @@ import model.ItemDTO;
 import java.sql.*;
 import java.util.ArrayList;
 
-public class ItemDAOImpl {
-
+public class ItemDAOImpl implements ItemDAOAgrement{
     public ArrayList<ItemDTO> getAll() throws SQLException, ClassNotFoundException {
         ArrayList<ItemDTO>itamArrayList=new ArrayList<>();
         Connection connection = DBConnection.getDbConnection().getConnection();
