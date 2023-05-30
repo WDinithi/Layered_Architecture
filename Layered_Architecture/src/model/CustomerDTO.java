@@ -8,11 +8,12 @@ import java.io.Serializable;
  **/
 
 public class CustomerDTO implements Serializable {
-    private String id;
-    private String name;
-    private String address;
+    public static String id;
+    public static String name;
+    public static String address;
 
     public CustomerDTO() {
+
     }
 
     public CustomerDTO(String id, String name, String address) {
@@ -20,6 +21,7 @@ public class CustomerDTO implements Serializable {
         this.name = name;
         this.address = address;
     }
+
 
     public String getId() {
         return id;
